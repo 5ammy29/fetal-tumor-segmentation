@@ -1,8 +1,18 @@
 # Fetal Tumor Segmentation in Ultrasound Images
 
-This project focuses on identifying tumor regions in fetal ultrasound images using a classic U-Net architecture. The main idea is to take an ultrasound image and produce a heatmap, where each pixel shows how likely it is to belong to a tumor.
+This repository implements a U-Net model for identifying tumor regions in fetal ultrasound images. The model takes an ultrasound image as input and produces a pixel-wise probability map of tumor regions.
 
-Current stage: Data preprocessing and dataset validation completed
+---
+
+## Problem Overview
+
+Fetal ultrasound images are difficult to analyze because they contain noise, low contrast, and unclear boundaries. As a result, identifying tumor regions manually is slow and can vary between observers.
+
+This project labels each pixel in an ultrasound image as tumor or background.
+- **Tumor (1)**
+- **Background (0)**
+
+The goal is to automatically locate tumor regions at the pixel level.
 
 ---
 
@@ -18,84 +28,61 @@ Only malignant cases that have corresponding tumor masks are used for training a
 
 ## Project Pipeline
 
-The project follows a step-by-step pipeline, starting from raw data and moving toward model training and evaluation.
+The project follows the pipeline described below.
 
-1. **Dataset loading and directory structuring (completed)**  
-   Ultrasound images and masks are loaded and organized into train, validation, and test folders.
+1. **Dataset Loading and Directory Structuring**  
+   Ultrasound images and corresponding masks are loaded and organized into train, validation, and test splits.
 
-2. **Image and mask preprocessing (completed)**  
-   Images are normalized, masks are binarized, and all files are resized to a fixed shape.
+2. **Image and Mask Preprocessing**  
+   Images are normalized to a fixed intensity range, masks are binarized, and all samples are resized to a consistent resolution.
 
-3. **Dataset and mask verification (completed)**  
-   The dataset is checked for missing masks, empty masks, shape mismatches, tumor locations near image borders, and intensity differences between tumor and background regions.
+3. **Dataset and Mask Verification**  
+   The dataset is checked for missing masks, empty masks, shape mismatches, tumor regions near image borders, and intensity differences between tumor and background areas.
 
-4. **Model architecture implementation (planned)**  
-   A U-Net–based segmentation model will be implemented for pixel-level tumor prediction.
+4. **Model Architecture Implementation**  
+   A U-Net–based segmentation model is implemented for pixel-level tumor prediction.
 
-5. **Planned model training**  
-   The model will be trained using the available annotated ultrasound images.
+5. **Model Training**  
+   The model is trained on annotated malignant ultrasound images using a combined Dice and BCE loss.
 
-6. **Evaluation and visualization (planned)**  
-   The results will be evaluated using segmentation metrics and visual overlays.
-
-At present, the project is transitioning from step 3 to step 4.
+6. **Evaluation and Visualization**  
+   The trained model is evaluated using Dice and IoU metrics, and predicted masks are generated for images in the test set.
 
 ---
 
-## Preprocessing (Completed)
+## Model Architecture
 
-This stage prepares the data so that it can be safely used for training a segmentation model. The goal is to remove inconsistencies and avoid errors later.
+The segmentation model is based on the original U-Net architecture proposed in 2015.
 
-Steps performed include normalization of ultrasound image intensities, binarization of segmentation masks, resizing images and masks to a fixed resolution, verifying filename-based image–mask pairing, and checking shape consistency between images and masks.
+It follows an encoder–decoder structure with skip connections that preserve spatial information between upsampling and downsampling. The model takes a grayscale ultrasound image as input and produces a pixel-wise tumor probability map as output.
 
----
-
-## Dataset & Mask Analysis (Completed)
-
-This stage analyzes the dataset to understand the quality of the images and masks before training.
-
-The checks performed include confirming that every image has a corresponding annotation, identifying cases where no tumor pixels are present, ensuring image and mask dimensions match, checking whether tumor regions are too close to image borders, and comparing pixel intensity values between tumor and background areas.
-
-These checks help confirm that the dataset is usable and meaningful for segmentation.
-
----
-
-## Data Verification (Completed)
-
-The verification code runs on each dataset split (train, validation, and test) and prints summary statistics.
-
-The output mainly includes basic information such as how many samples are present, whether any masks are empty, how often tumors appear near image borders, and how different tumor regions are from the background in terms of intensity.
-
-This step serves as a final sanity check before model training begins.
-
----
-
-## Planned Model Architecture
-
-The segmentation model will initially be based on the original U-Net architecture proposed in 2015.
-
-Planned characteristics:
-- Single-channel (grayscale) image input  
-- Pixel-wise probability output in the form of a heatmap  
-- Skip connections between encoder and decoder layers  
-- Sigmoid activation for binary segmentation  
-
-The output heatmap can be thresholded to obtain a final binary tumor mask.
+Applying a threshold converts the heatmap into a binary tumor mask.
 
 **Reference:**  
-Ronneberger, O., Fischer, P., and Brox, T. *U-Net: Convolutional Networks for Biomedical Image Segmentation* (2015)
+Ronneberger, O., Fischer, P., and Brox, T. U-Net: Convolutional Networks for Biomedical Image Segmentation (2015)
 
 ---
 
-## Training and Evaluation (Planned)
+## Training Configuration
 
-- **Loss Functions:** Dice Loss and Binary Cross-Entropy combined with Dice Loss  
-- **Metrics:** Dice Coefficient and Intersection over Union (IoU)  
-- **Evaluation:** Quantitative metrics along with visual inspection of predicted segmentation outputs  
+- **Loss Function:** Dice Loss + 0.2 × BCEWithLogitsLoss  
+- **Optimizer:** Adam  
+- **Epochs:** 35 (early stabilization at epoch 29)  
+
+The combined Dice and BCE loss improves overlap accuracy while maintaining stable gradients.
+
+---
+
+## Evaluation Results
+
+Evaluation was conducted on a separate test set.
+
+- **Mean Dice Score:** 0.9367  
+- **Mean IoU:** 0.9000  
 
 ---
 
 ## Disclaimer
 
-This project is intended for **academic and learning purposes only**.  
-The annotations in the dataset are approximate, and the results produced by the model are **not meant for clinical use or medical decision-making**.
+This project is intended for academic and learning purposes only.  
+The annotations in the dataset are approximate, and the results produced by the model are not meant for clinical use or medical decision-making.
